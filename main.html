@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi Audio/Video Player</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .player-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .filename { font-weight: bold; margin-bottom: 8px; }
+        video, audio { width: 400px; display: block; margin-bottom: 8px; }
+        .controls { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; align-items: center; }
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 50px;
+          height: 24px;
+        }
+        .switch input { display: none; }
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+          border-radius: 24px;
+        }
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 18px; width: 18px;
+          left: 3px; bottom: 3px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
+        }
+        input:checked + .slider {
+          background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+          transform: translateX(26px);
+        }
+        button {
+          padding: 5px 10px;
+          border: none;
+          background: #f44336;
+          color: white;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        button:hover { background: #d32f2f; }
+        #global-controls { margin: 20px 0; padding: 10px; border: 2px solid #aaa; border-radius: 10px; }
+        .volume-control { display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+<h2>Multi Audio/Video Player</h2>
+<input type="file" id="fileInput" accept="audio/*,video/*" multiple><br><br>
+
+<div id="global-controls">
+    <h3>Global Controls</h3>
+    <div class="controls">
+        <label>Play/Pause
+            <label class="switch">
+                <input type="checkbox" id="globalPlayPause">
+                <span class="slider"></span>
+            </label>
+        </label>
+        <label>Loop
+            <label class="switch">
+                <input type="checkbox" id="globalLoop">
+                <span class="slider"></span>
+            </label>
+        </label>
+        <button onclick="stopAll()">Stop All</button>
+    </div>
+    <div class="volume-control">
+        <label for="masterVolume">Master Volume:</label>
+        <input type="range" id="masterVolume" min="0" max="1" step="0.01" value="1">
+    </div>
+</div>
+
+<div id="players"></div>
+
+<script>
+    const fileInput = document.getElementById("fileInput");
+    const playersDiv = document.getElementById("players");
+    const masterVolume = document.getElementById("masterVolume");
+    let mediaElements = [];
+
+    fileInput.addEventListener("change", (event) => {
+      playersDiv.innerHTML = "";
+      mediaElements = [];
+
+      Array.from(event.target.files).forEach(file => {
+        const container = document.createElement("div");
+        container.classList.add("player-container");
+
+        const label = document.createElement("div");
+        label.classList.add("filename");
+        label.textContent = file.name;
+        container.appendChild(label);
+
+        // Decide whether to use audio or video
+        let media;
+        if (file.type.startsWith("video")) {
+          media = document.createElement("video");
+        } else {
+          media = document.createElement("audio");
+        }
+        media.controls = true;
+        media.src = URL.createObjectURL(file);
+        media.volume = masterVolume.value; // sync with master volume
+        container.appendChild(media);
+
+        // Individual toggle controls
+        const controls = document.createElement("div");
+        controls.classList.add("controls");
+
+        // Play/Pause toggle
+        const playPauseLabel = document.createElement("label");
+        playPauseLabel.textContent = "Play/Pause ";
+        const playPauseSwitch = document.createElement("label");
+        playPauseSwitch.classList.add("switch");
+        const playPauseInput = document.createElement("input");
+        playPauseInput.type = "checkbox";
+        const playPauseSlider = document.createElement("span");
+        playPauseSlider.classList.add("slider");
+        playPauseSwitch.appendChild(playPauseInput);
+        playPauseSwitch.appendChild(playPauseSlider);
+        playPauseLabel.appendChild(playPauseSwitch);
+
+        playPauseInput.onchange = () => {
+          if (playPauseInput.checked) {
+            media.play();
+          } else {
+            media.pause();
+          }
+        };
+
+        // Loop toggle
+        const loopLabel = document.createElement("label");
+        loopLabel.textContent = "Loop ";
+        const loopSwitch = document.createElement("label");
+        loopSwitch.classList.add("switch");
+        const loopInput = document.createElement("input");
+        loopInput.type = "checkbox";
+        const loopSlider = document.createElement("span");
+        loopSlider.classList.add("slider");
+        loopSwitch.appendChild(loopInput);
+        loopSwitch.appendChild(loopSlider);
+        loopLabel.appendChild(loopSwitch);
+
+        loopInput.onchange = () => {
+          media.loop = loopInput.checked;
+        };
+
+        // Stop button
+        const stopBtn = document.createElement("button");
+        stopBtn.textContent = "Stop";
+        stopBtn.onclick = () => {
+          media.pause();
+          media.currentTime = 0;
+          playPauseInput.checked = false;
+        };
+
+        controls.appendChild(playPauseLabel);
+        controls.appendChild(loopLabel);
+        controls.appendChild(stopBtn);
+        container.appendChild(controls);
+
+        playersDiv.appendChild(container);
+        mediaElements.push({ media, playPauseInput, loopInput });
+      });
+    });
+
+    // Global Play/Pause
+    document.getElementById("globalPlayPause").onchange = function() {
+      if (this.checked) {
+        mediaElements.forEach(obj => {
+          obj.media.play();
+          obj.playPauseInput.checked = true;
+        });
+      } else {
+        mediaElements.forEach(obj => {
+          obj.media.pause();
+          obj.playPauseInput.checked = false;
+        });
+      }
+    };
+
+    // Global Loop
+    document.getElementById("globalLoop").onchange = function() {
+      mediaElements.forEach(obj => {
+        obj.media.loop = this.checked;
+        obj.loopInput.checked = this.checked;
+      });
+    };
+
+    // Global Stop
+    function stopAll() {
+      mediaElements.forEach(obj => {
+        obj.media.pause();
+        obj.media.currentTime = 0;
+        obj.playPauseInput.checked = false;
+      });
+      document.getElementById("globalPlayPause").checked = false;
+    }
+
+    // Master Volume
+    masterVolume.addEventListener("input", function() {
+      mediaElements.forEach(obj => {
+        obj.media.volume = masterVolume.value;
+      });
+    });
+</script>
+</body>
+</html>
