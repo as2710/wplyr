@@ -3,79 +3,96 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-    <title>Progress‑Bar Audio Player — Mobile / Brave Fixes</title>
+    <title>Progress‑Bar Audio Player — Mobile Fixed</title>
     <style>
-        :root{--bg:#061025;--muted:#9aa3b2;--accent:#7c9cff;--accent2:#57e3a0;--glass:rgba(255,255,255,0.04);--gap:12px;--pad:12px}
+        :root{
+          --bg:#061025; --muted:#9aa3b2; --accent:#7c9cff; --accent2:#57e3a0; --glass:rgba(255,255,255,0.04);
+          --gap:12px; --pad:12px; --radius:12px; --btn-h:44px;
+        }
         *{box-sizing:border-box}
-        html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#08102a);color:#e6ebff}
-        header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,rgba(6,16,37,0.96),rgba(6,14,30,0.9));border-bottom:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(8px)}
-        .container{max-width:980px;margin:0 auto;padding:12px}
+        html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#08102a);color:#e6ebff;-webkit-font-smoothing:antialiased}
 
-        /* header layout - stacked on mobile for clarity */
-        .headerTop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-        .fileInputWrap{flex:1 1 220px;display:flex;gap:8px;align-items:center}
-        .globalWrap{display:flex;gap:8px;align-items:center;flex:1 1 300px;justify-content:flex-end}
-        .globalBtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        .btn{background:transparent;border-radius:10px;padding:10px 12px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;color:inherit;font-weight:600}
+        /* HEADER - simple and mobile-safe */
+        header{position:sticky;top:0;z-index:60;background:linear-gradient(180deg,rgba(6,16,37,0.96),rgba(6,14,30,0.9));border-bottom:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(8px)}
+        .container{max-width:980px;margin:0 auto;padding:12px}
+        .header-grid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+
+        /* Left column will hold file picker; right column holds compact controls */
+        .fileRow{display:flex;gap:8px;align-items:center}
+        input[type=file]{display:block}
+
+        .compactControls{display:flex;gap:8px;align-items:center}
+        .compactControls .scrollRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+        .compactControls .scrollRow::-webkit-scrollbar{height:8px}
+
+        .btn{background:transparent;border-radius:10px;padding:8px 10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;color:inherit;font-weight:600;white-space:nowrap}
         .btn[aria-pressed="true"]{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#04102a;border-color:transparent}
-        .btn.small{padding:8px 10px}
+        .small{padding:8px 10px;font-size:14px}
 
         .masterControls{display:flex;gap:8px;align-items:center}
-        .masterControls input[type=range]{width:120px}
+        .masterControls input[type=range]{width:110px}
+        .wakeArea{display:flex;align-items:center;gap:8px}
 
-        .bgBadge{margin-left:8px;padding:6px 10px;border-radius:12px;font-size:13px;font-weight:700;background:rgba(255,211,77,0.12);color:#ffd34d}
-        .wakeArea{display:flex;align-items:center;gap:8px;margin-left:6px}
-        .wakeArea .tiny{font-size:12px;color:var(--muted)}
-
-        /* grid & card */
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:12px}
-        .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:14px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
+        /* CARDS */
+        main{padding:12px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+        .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
         .meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
         .title{font-weight:700;font-size:15px}
         .tiny{font-size:13px;color:var(--muted)}
+        .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         progress{width:100%;height:12px;border-radius:8px;background:rgba(255,255,255,0.03)}
         progress::-webkit-progress-value{background:linear-gradient(90deg,var(--accent),var(--accent2))}
-        .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .seek{width:100%;margin-top:8px}
+
         .controls-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
         .speedRow,.volRow{display:flex;align-items:center;gap:8px}
-        .volInfo{min-width:120px;text-align:right}
+        .volInfo{min-width:100px;text-align:right}
 
+        .bgBadge{margin-left:8px;padding:6px 10px;border-radius:12px;font-size:13px;font-weight:700;background:rgba(255,211,77,0.12);color:#ffd34d}
+
+        /* MOBILE FIRST ADJUSTMENTS */
         @media (max-width:760px){
-          .container{padding:8px}
-          .grid{grid-template-columns:1fr}
-          .globalWrap{justify-content:space-between;flex-basis:100%}
-          .masterControls input[type=range]{width:100px}
+          .header-grid{grid-template-columns:1fr}
+          .compactControls{order:2;display:flex;flex-direction:column;gap:8px}
+          .compactControls .scrollRow{width:100%;overflow-x:auto}
+          .masterControls{justify-content:space-between}
           .controls-right{align-items:flex-start}
-          .volInfo{min-width:80px}
+          .volInfo{min-width:70px}
+          .grid{grid-template-columns:1fr}
+          .btn{min-width:44px}
         }
+
+        /* accessibility */
+        button,input,select{touch-action:manipulation}
     </style>
 </head>
 <body>
 <header>
-    <div class="container headerTop">
-        <div class="fileInputWrap">
-            <label class="tiny" for="filePicker">Select audio</label>
+    <div class="container header-grid">
+        <div class="fileRow">
+            <label class="tiny" for="filePicker">Select audio files</label>
             <input id="filePicker" type="file" accept="audio/*,.wav,.flac,.mp3,.m4a,.ogg" multiple />
         </div>
 
-        <div class="globalWrap">
-            <div class="globalBtns" role="toolbar" aria-label="Global controls">
-                <button id="gPlay" class="btn small" aria-pressed="false">Play</button>
-                <button id="gPause" class="btn small" aria-pressed="false">Pause</button>
-                <button id="gStop" class="btn small" aria-pressed="false">Stop</button>
-                <button id="gLoop" class="btn small" aria-pressed="false">Loop</button>
-                <button id="gSound" class="btn small" aria-pressed="false">Sound</button>
+        <div class="compactControls">
+            <div class="scrollRow" role="toolbar" aria-label="Global controls">
+                <button id="gPlay" class="btn small" aria-pressed="false">Play all</button>
+                <button id="gPause" class="btn small" aria-pressed="false">Pause all</button>
+                <button id="gStop" class="btn small" aria-pressed="false">Stop all</button>
+                <button id="gLoop" class="btn small" aria-pressed="false">Loop all</button>
+                <button id="gSound" class="btn small" aria-pressed="false">Sound all</button>
             </div>
 
             <div class="masterControls">
-                <label class="tiny">Master Vol</label>
+                <label class="tiny">Master</label>
                 <input id="masterVol" type="range" min="0" max="1" step="0.01" value="1" />
                 <div id="masterVolDb" class="tiny">0.0 dB</div>
                 <button id="masterMute" class="btn small" aria-pressed="false">Mute</button>
 
                 <div class="wakeArea" id="wakeArea">
                     <div class="tiny">Wake: <strong id="wakeMode">Off</strong></div>
-                    <button id="wakeToggle" class="btn small" aria-pressed="false" title="Toggle wake lock">Wake</button>
+                    <button id="wakeToggle" class="btn small" aria-pressed="false">Wake</button>
                 </div>
 
                 <div id="bgHeaderIndicator" class="bgBadge" style="display:none">Background playing</div>
@@ -86,7 +103,7 @@
 </header>
 
 <main class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">
         <div class="tiny">Global settings</div>
         <div>
             <label class="tiny">Tick</label>
@@ -98,67 +115,53 @@
 </main>
 
 <script>
-    // Improved background indicator, wake-lock visibility, Brave-friendly detection (visibility + blur/pagehide)
+    // Keep previous app behavior; small safety checks and mobile-friendly event handling
     const $ = (s,el=document)=>el.querySelector(s);
+    const $$ = (s,el=document)=>Array.from(el.querySelectorAll(s));
     const cards = $('#cards');
     const state = new Map();
-    const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // --- Wake Lock ---
-    let wakeLock=null; let manualWake=false;
+    // WAKE LOCK
+    let wakeLock = null; let manualWake = false;
     async function requestWake(){ if(!('wakeLock' in navigator)) return false; try{ if(wakeLock) return true; wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', ()=>{ wakeLock=null; updateWakeUI(); }); updateWakeUI(); return true; }catch(e){ wakeLock=null; updateWakeUI(); return false; } }
     async function releaseWake(){ if(!('wakeLock' in navigator)) return false; try{ if(wakeLock){ await wakeLock.release(); wakeLock=null; updateWakeUI(); } return true; }catch(e){ return false; } }
     function updateWakeUI(){ const mode = $('#wakeMode'); if(!mode) return; if(manualWake){ mode.textContent='Manual'; $('#wakeToggle').setAttribute('aria-pressed','true'); } else if(wakeLock){ mode.textContent='Auto'; $('#wakeToggle').setAttribute('aria-pressed','false'); } else { mode.textContent='Off'; $('#wakeToggle').setAttribute('aria-pressed','false'); } }
     $('#wakeToggle').addEventListener('click', async ()=>{ manualWake = !manualWake; if(manualWake) await requestWake(); else await releaseWake(); updateWakeUI(); });
 
-    // --- Master volume ---
-    let masterVolume=1.0, masterMuted=false;
-    function volToDb(v){ return v<=0?'-∞':(20*Math.log10(v)).toFixed(1)+' dB'; }
+    // MASTER VOLUME
+    let masterVolume = 1.0; let masterMuted = false;
+    function volToDb(v){ if(v<=0) return '-∞'; return (20*Math.log10(v)).toFixed(1)+' dB'; }
     $('#masterVol').addEventListener('input', ()=>{ masterVolume = parseFloat($('#masterVol').value); $('#masterVolDb').textContent = volToDb(masterVolume); applyMasterVolume(); notifyBackgroundState(); });
-    $('#masterMute').addEventListener('click', ()=>{ masterMuted=!masterMuted; $('#masterMute').setAttribute('aria-pressed', masterMuted?'true':'false'); applyMasterVolume(); notifyBackgroundState(); });
+    $('#masterMute').addEventListener('click', ()=>{ masterMuted = !masterMuted; $('#masterMute').setAttribute('aria-pressed', masterMuted?'true':'false'); applyMasterVolume(); notifyBackgroundState(); });
     function applyMasterVolume(){ for(const c of state.values()){ if(c.audioEl){ try{ c.audioEl.volume = (c.muted?0: (c.volume * masterVolume * (masterMuted?0:1))); }catch(e){} } const info=document.getElementById('volInfo-'+c.id); if(info) info.textContent = `${Math.round(c.volume*100)}% / ${volToDb(c.volume)}`; } $('#masterVolDb').textContent = masterMuted?'-∞':volToDb(masterVolume); }
 
-    // --- Notifications & background indicators ---
+    // NOTIFICATIONS & BACKGROUND INDICATORS
     let _playNotif = null;
-    async function ensureNotificationSupport(){ if(!('Notification' in window)) return false; try{ const perm = Notification.permission; return perm; }catch(e){ return 'default'; } }
     $('#requestNotif').addEventListener('click', async ()=>{ if(!('Notification' in window)){ alert('Notifications not supported'); return; } const perm = await Notification.requestPermission(); if(perm==='granted') $('#requestNotif').style.display='none'; });
     function showPlaybackNotification(){ if(!('Notification' in window)) return; if(Notification.permission!=='granted') return; try{ if(_playNotif) _playNotif.close(); }catch(e){} const playing = Array.from(state.values()).filter(c=>c.playing && !c.paused); const title = 'Playback running'; const body = playing.length>1?`${playing.length} tracks playing`: (playing.length===1?playing[0].file.name:'1 track playing'); _playNotif = new Notification(title,{body,tag:'audio-playback-indicator',renotify:true,silent:true}); _playNotif.onclick = ()=>{ try{ window.focus(); }catch(e){} _playNotif.close(); }; }
     function closePlaybackNotification(){ try{ if(_playNotif) _playNotif.close(); _playNotif=null; }catch(e){} }
-
     function setHeaderBgIndicator(show){ const el = $('#bgHeaderIndicator'); if(!el) return; el.style.display = show ? 'inline-block' : 'none'; }
     function setPerFileBgBadge(ctrl, show){ if(!ctrl) return; if(!ctrl._bgBadge){ const card = document.getElementById('card-'+ctrl.id); if(!card) return; const meta = card.querySelector('.meta'); const span = document.createElement('span'); span.className='bgBadge'; span.textContent='Background'; span.style.display='none'; meta.appendChild(span); ctrl._bgBadge = span; } if(ctrl._bgBadge) ctrl._bgBadge.style.display = show ? 'inline-block' : 'none'; }
 
     function updateMediaSession(){ if(!('mediaSession' in navigator)) return; const active = Array.from(state.values()).find(c=>c.playing && !c.paused); if(!active){ navigator.mediaSession.metadata = null; return; } try{ navigator.mediaSession.metadata = new MediaMetadata({ title: active.file?.name || 'Audio', artist: 'Player' }); navigator.mediaSession.setActionHandler('play', ()=>{ playCtrl(active); }); navigator.mediaSession.setActionHandler('pause', ()=>{ pauseCtrl(active); }); navigator.mediaSession.setActionHandler('stop', ()=>{ stopCtrl(active); }); }catch(e){} }
 
-    // Detect hidden/minimized reliably: visibilitychange + blur/pagehide + focus/pageshow
-    async function handleVisibilityChange(){ const hidden = document.visibilityState === 'hidden' || document.hidden === true; const playing = anyPlaying(); // header badge
-      setHeaderBgIndicator(hidden && playing);
-      for(const ctrl of state.values()) setPerFileBgBadge(ctrl, hidden && ctrl.playing && !ctrl.paused);
-      // notification if hidden and playing
-      if(hidden && playing){ showPlaybackNotification(); } else { closePlaybackNotification(); }
-      updateMediaSession(); }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleVisibilityChange); // covers some Brave cases
-    window.addEventListener('pagehide', handleVisibilityChange);
-    window.addEventListener('focus', handleVisibilityChange);
-    window.addEventListener('pageshow', handleVisibilityChange);
-
+    // better hidden detection (visibilitychange + blur/pagehide)
+    async function handleVisibilityChange(){ const hidden = document.visibilityState==='hidden' || document.hidden===true; const playing = anyPlaying(); setHeaderBgIndicator(hidden && playing); for(const ctrl of state.values()) setPerFileBgBadge(ctrl, hidden && ctrl.playing && !ctrl.paused); if(hidden && playing) showPlaybackNotification(); else closePlaybackNotification(); updateMediaSession(); }
+    document.addEventListener('visibilitychange', handleVisibilityChange); window.addEventListener('blur', handleVisibilityChange); window.addEventListener('pagehide', handleVisibilityChange); window.addEventListener('focus', handleVisibilityChange); window.addEventListener('pageshow', handleVisibilityChange);
     function notifyBackgroundState(){ handleVisibilityChange(); }
 
-    // --- Global controls wiring ---
+    // GLOBAL BUTTONS
     $('#gPlay').addEventListener('click', ()=>{ for(const c of state.values()) playCtrl(c); setGlobalToggle('gPlay',true); setGlobalToggle('gPause',false); notifyBackgroundState(); });
     $('#gPause').addEventListener('click', ()=>{ for(const c of state.values()) pauseCtrl(c); setGlobalToggle('gPause',true); setGlobalToggle('gPlay',false); notifyBackgroundState(); });
     $('#gStop').addEventListener('click', ()=>{ for(const c of state.values()) stopCtrl(c); setGlobalToggle('gStop',true); setGlobalToggle('gPlay',false); setGlobalToggle('gPause',false); notifyBackgroundState(); });
     $('#gLoop').addEventListener('click', ()=>{ const pressed = $('#gLoop').getAttribute('aria-pressed')==='true'; const next = !pressed; for(const c of state.values()){ c.loop = next; c.loopEl.checked = next; } setGlobalToggle('gLoop', next); notifyBackgroundState(); });
     $('#gSound').addEventListener('click', ()=>{ const pressed = $('#gSound').getAttribute('aria-pressed')==='true'; const next = !pressed; for(const c of state.values()){ c.sound = next && !!c.file && !!c.decoded; if(c.sound && c.playing && !c.paused) startAudioElement(c); else stopAudioElement(c); c.soundEl.checked = c.sound; } setGlobalToggle('gSound', next); updateGlobalSoundButton(); notifyBackgroundState(); });
-
     $('#tickMs').addEventListener('change', ()=>{ const t = parseInt($('#tickMs').value,10); for(const c of state.values()){ c.tick = t; if(c.playing && !c.paused){ clearInterval(c.timer); startLoopFor(c); } } });
 
-    // --- core playback machinery (keeps previous behavior) ---
+    // CORE PLAYBACK
     function anyPlaying(){ return Array.from(state.values()).some(c=>c.playing && !c.paused); }
-
     function setGlobalToggle(id,pressed){ const el = $('#'+id); if(el) el.setAttribute('aria-pressed', pressed?'true':'false'); }
-
     function startLoopFor(ctrl){ clearInterval(ctrl.timer); const ms = Math.max(20, ctrl.tick); ctrl.timer = setInterval(()=>advance(ctrl), ms); }
     function advance(ctrl){ if(ctrl.paused||ctrl.stopped) return; if(ctrl.sound && ctrl.audioEl && !ctrl.audioEl.paused){ const cur = Math.max(0, ctrl.audioEl.currentTime || 0); ctrl.offset = Math.round(cur * (ctrl.sr || 48000)); const total = ctrl.decoded ? ctrl.decoded.duration : (ctrl.duration || Math.max(1, (new Uint8Array(ctrl.buf)).length / 48000)); setProgFromFraction(ctrl, Math.min(1, cur/total)); updateUI(ctrl); return; }
       if(ctrl.mode==='pcm' && ctrl.decoded){ const sr = ctrl.sr; const samplesPerTick = Math.max(1, Math.round(sr*(ctrl.tick/1000)*ctrl.rate)); const totalSamples = Math.round(ctrl.decoded.duration*sr); ctrl.offset = Math.min(totalSamples, ctrl.offset + samplesPerTick); const frac = ctrl.offset / totalSamples; setProgFromFraction(ctrl, frac); updateUI(ctrl); if(ctrl.offset>=totalSamples) return finish(ctrl); } else { const u = new Uint8Array(ctrl.buf); const total = u.length; const dur = ctrl.duration || Math.max(1, total/48000); const bytesPerTick = Math.max(1, Math.round((total/dur)*(ctrl.tick/1000)*ctrl.rate)); ctrl.offset = Math.min(total, ctrl.offset + bytesPerTick); const frac = ctrl.offset / total; setProgFromFraction(ctrl, frac); updateUI(ctrl); if(ctrl.offset>=total) return finish(ctrl); } }
@@ -169,10 +172,9 @@
     function pauseCtrl(ctrl){ if(!ctrl.playing||ctrl.paused) return; ctrl.paused=true; clearInterval(ctrl.timer); if(ctrl.sound && ctrl.audioEl) try{ ctrl.audioEl.pause(); }catch(e){} ctrl.statusEl.textContent='Paused'; setButtonStates(ctrl); updateGlobalButtons(); updateAutoWake(); notifyBackgroundState(); }
     function stopCtrl(ctrl){ clearInterval(ctrl.timer); if(ctrl.sound) stopAudioElement(ctrl); ctrl.playing=false; ctrl.paused=false; ctrl.stopped=true; ctrl.offset=0; setProgFromFraction(ctrl,0); updateUI(ctrl); ctrl.statusEl.textContent='Stopped'; setButtonStates(ctrl); updateGlobalButtons(); updateAutoWake(); notifyBackgroundState(); }
 
-    async function addCard(file){
-      const id = Math.random().toString(36).slice(2)+Date.now().toString(36);
-      const card = document.createElement('div'); card.className='card'; card.id='card-'+id;
-      card.innerHTML = `
+    // ADD CARD
+    $('#filePicker').addEventListener('change', async e=>{ for(const f of e.target.files) await addCard(f); e.target.value=''; });
+    async function addCard(file){ const id = Math.random().toString(36).slice(2)+Date.now().toString(36); const card = document.createElement('div'); card.className='card'; card.id='card-'+id; card.innerHTML = `
         <div class="meta">
           <div>
             <div class="title">${file.name}</div>
@@ -217,11 +219,9 @@
             </div>
           </div>
         </div>`;
-
       cards.prepend(card);
 
-      const buf = await file.arrayBuffer();
-      let decoded=null,duration=null,sr=null,ch=null; try{ decoded = await audioCtx.decodeAudioData(buf.slice(0)); duration = decoded.duration; sr = decoded.sampleRate; ch = decoded.numberOfChannels; }catch(e){}
+      const buf = await file.arrayBuffer(); let decoded=null,duration=null,sr=null,ch=null; try{ decoded = await audioCtx.decodeAudioData(buf.slice(0)); duration = decoded.duration; sr = decoded.sampleRate; ch = decoded.numberOfChannels; }catch(e){}
 
       const prog = $(`#prog-${id}`), seek = $(`#seek-${id}`), playBtn = $(`#play-${id}`), pauseBtn = $(`#pause-${id}`), stopBtn = $(`#stop-${id}`), rateEl = $(`#rate-${id}`), speedValEl = $(`#speedVal-${id}`), statusEl = $(`#status-${id}`), timeEl = $(`#time-${id}`), loopEl = $(`#loop-${id}`), sizeEl = $(`#size-${id}`), soundEl = $(`#sound-${id}`), volEl = $(`#vol-${id}`), volInfo = $(`#volInfo-${id}`), muteBtn = $(`#mute-${id}`), removeBtn = $(`#remove-${id}`);
 
@@ -249,21 +249,23 @@
 
       refreshVolInfo(); updateUI(ctrl); setButtonStates(ctrl); state.set(id, ctrl); updateGlobalButtons(); updateGlobalSoundButton(); applyMasterVolume(); }
 
+    // AUDIO ELEMENT HELPERS
     function makeBlobUrl(file){ try{return URL.createObjectURL(file);}catch(e){return null;} }
-    function startAudioElement(ctrl){ if(!ctrl.file) return; if(!ctrl.audioUrl) ctrl.audioUrl = makeBlobUrl(ctrl.file); if(!ctrl.audioUrl) return; if(!ctrl.audioEl){ const a = new Audio(); a.src = ctrl.audioUrl; a.preload='auto'; a.crossOrigin='anonymous'; a.preservesPitch = true; ctrl.audioEl = a; a.addEventListener('timeupdate', ()=>{ if(ctrl.sound && ctrl.playing && !ctrl.paused){ const cur = ctrl.audioEl.currentTime || 0; ctrl.offset = Math.round(cur * (ctrl.sr || 48000)); const total = ctrl.decoded?ctrl.decoded.duration:(ctrl.duration||Math.max(1,(new Uint8Array(ctrl.buf)).length/48000)); setProgFromFraction(ctrl, Math.min(1, cur/total)); updateUI(ctrl); } }); a.addEventListener('ended', ()=>{ stopAudioElement(ctrl); }); }
+    function startAudioElement(ctrl){ if(!ctrl.file) return; if(!ctrl.audioUrl) ctrl.audioUrl = makeBlobUrl(ctrl.file); if(!ctrl.audioUrl) return; if(!ctrl.audioEl){ const a=new Audio(); a.src = ctrl.audioUrl; a.preload='auto'; a.crossOrigin='anonymous'; a.preservesPitch = true; ctrl.audioEl = a; a.addEventListener('timeupdate', ()=>{ if(ctrl.sound && ctrl.playing && !ctrl.paused){ const cur = ctrl.audioEl.currentTime || 0; ctrl.offset = Math.round(cur * (ctrl.sr || 48000)); const total = ctrl.decoded?ctrl.decoded.duration:(ctrl.duration||Math.max(1,(new Uint8Array(ctrl.buf)).length/48000)); setProgFromFraction(ctrl, Math.min(1, cur/total)); updateUI(ctrl); } }); a.addEventListener('ended', ()=>{ stopAudioElement(ctrl); }); }
       try{ ctrl.audioEl.playbackRate = ctrl.rate || 1; ctrl.audioEl.volume = (ctrl.muted?0: (ctrl.volume * masterVolume * (masterMuted?0:1))); const pos = Math.max(0, Math.min((ctrl.decoded?ctrl.decoded.duration:(ctrl.duration||0.1)), ctrl.offset / (ctrl.sr || 48000))); try{ ctrl.audioEl.currentTime = pos; }catch(e){} ctrl.audioEl.play().catch(()=>{}); }catch(e){}
     }
     function stopAudioElement(ctrl){ try{ if(ctrl.audioEl){ try{ ctrl.audioEl.pause(); }catch(e){} } }catch(e){} }
     function revokeAudioUrl(ctrl){ try{ if(ctrl.audioUrl){ URL.revokeObjectURL(ctrl.audioUrl); ctrl.audioUrl=null; } }catch(e){} }
 
+    // UI helpers
     function setButtonStates(ctrl){ ctrl.playBtn.setAttribute('aria-pressed', (ctrl.playing && !ctrl.paused) ? 'true':'false'); ctrl.pauseBtn.setAttribute('aria-pressed', (ctrl.playing && ctrl.paused)?'true':'false'); ctrl.stopBtn.setAttribute('aria-pressed', (ctrl.stopped)?'true':'false'); }
     function updateGlobalButtons(){ const anyPlaying = Array.from(state.values()).some(c=>c.playing && !c.paused); const anyPaused = Array.from(state.values()).some(c=>c.playing && c.paused); const anyStopped = Array.from(state.values()).every(c=>c.stopped || !c.playing); setGlobalToggle('gPlay', anyPlaying); setGlobalToggle('gPause', anyPaused); setGlobalToggle('gStop', anyStopped); updateGlobalLoopButton(); updateAutoWake(); }
     function updateGlobalLoopButton(){ const allLoop = Array.from(state.values()).length>0 && Array.from(state.values()).every(c=>c.loop); setGlobalToggle('gLoop', allLoop); }
     function updateGlobalSoundButton(){ const allSound = Array.from(state.values()).length>0 && Array.from(state.values()).every(c=>c.sound); setGlobalToggle('gSound', allSound); }
+    function setGlobalToggle(id,pressed){ const el=$('#'+id); if(el) el.setAttribute('aria-pressed', pressed?'true':'false'); }
 
-    function setGlobalToggle(id,pressed){ const el = $('#'+id); if(el) el.setAttribute('aria-pressed', pressed?'true':'false'); }
     function setProgFromFraction(c,frac){ c.prog.value = Math.max(0,Math.min(1,frac)); c.seek.value = Math.round(frac*1000); }
-    function setOffsetFromFraction(c,frac){ if(c.mode==='pcm' && c.decoded){ const totalSamples = Math.round(c.decoded.duration*c.sr); c.offset = Math.round(frac*totalSamples); } else { const u = new Uint8Array(c.buf); c.offset = Math.round(frac*u.length); } }
+    function setOffsetFromFraction(c,frac){ if(c.mode==='pcm' && c.decoded){ const totalSamples=Math.round(c.decoded.duration*c.sr); c.offset = Math.round(frac*totalSamples); } else { const u=new Uint8Array(c.buf); c.offset = Math.round(frac*u.length); } }
     function updateUI(c){ const total = c.mode==='pcm' && c.decoded ? c.decoded.duration : (c.duration || Math.max(1,(new Uint8Array(c.buf)).length/48000)); const cur = c.mode==='pcm' && c.decoded ? (c.offset / c.sr) : ((c.offset / (new Uint8Array(c.buf)).length) * total); c.timeEl.textContent = `${fmtTime(cur)} / ${fmtTime(total)}`; setButtonStates(c); }
 
     function fmtBytes3(n){ const u=['B','KB','MB','GB']; let i=0; let v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return `${v.toFixed(i===0?0:3)} ${u[i]}`; }
